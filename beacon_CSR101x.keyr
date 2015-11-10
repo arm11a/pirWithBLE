@@ -14,7 +14,7 @@
 // USER1 - payload size for the Manufacturer-specific AD (valid range is between 1 and 24)
 // USER2 - advertising interval in milliseconds (valid range is between 100 and 10240)
 // USER3 - set to non-zero in order to use static random addresses
-&USER_KEYS = 00AA 0018 03E8 0000 0000 0000 0000 0000
+&USER_KEYS = 00AA 0018 2800 0000 0000 0000 0000 0000
 //03E8
 // The following Identity Root value should be changed while flashing each chip. This
 // will ensure different static addresses for different chips.
