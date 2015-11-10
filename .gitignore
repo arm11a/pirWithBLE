@@ -1,1 +1,5 @@
 /.settings/
+/depend_Debug_CSR101x_A05/
+/beacon.debug.mak
+/beacon.elf
+/flags.configuration
