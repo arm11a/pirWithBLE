@@ -19,17 +19,18 @@
 #include <pio.h>
 #include <random.h>
 #include <timer.h>
+#include "statusService.h"
 
 /*============================================================================*
  *  Private Definitions
  *============================================================================*/
 
+
 #define PIO_LED0        10          /* PIO connected to the LED0 on CSR10xx */
-#define PIO_BUTTON      11          /* PIO connected to the button on CSR10xx */
 
 #define PIO_DIR_OUTPUT  TRUE        /* PIO direction configured as output */
 #define PIO_DIR_INPUT   FALSE       /* PIO direction configured as input */
-#define MAX_APP_TIMERS       2
+#define MAX_APP_TIMERS       3
 
 /*============================================================================*
  *  Local Header File
@@ -40,9 +41,6 @@
 /*============================================================================*
  *  Private Function Prototypes
  *============================================================================*/
-
-static void startAdvertising(void);
-static void stopAdvertising(void);
 
 static void appSetRandomAddress(void);
 /*============================================================================*
@@ -61,7 +59,7 @@ static uint16 app_timers[ SIZEOF_APP_TIMER * MAX_APP_TIMERS ];
  *============================================================================*/
 
 /* Advance LED flashing sequence to next state */
-static void goToNextLedSeq(uint32 onOff);
+//static void goToNextLedSeq(uint32 onOff);
 
 /* Restart LED sequence from the beginning */
 static void restartLedSeq(void);
@@ -82,21 +80,19 @@ static void restartLedSeq(void);
  * RETURNS
  *      Nothing
  *----------------------------------------------------------------------------*/
+#if 1
 static void goToNextLedSeq(uint32 onOff)
 {
 	if(onOff == 0)
 	{
-		stopAdvertising();
-		/* Set LED0 according to bit 0 of desired pattern */
 		PioSet(PIO_LED0, 0);
 	}
 	else
 	{
-		startAdvertising();
 		PioSet(PIO_LED0, 1);
 	}
 }
-
+#endif
 /*----------------------------------------------------------------------------*
  *  NAME
  *      restartLedSeq
@@ -175,10 +171,8 @@ static void appSetRandomAddress(void)
  *      Nothing.
  *
  *---------------------------------------------------------------------------*/
-void startAdvertising(void)
+static void BeaconInit(void)
 {
-    uint8 advData[MAX_ADVERT_PACKET_SIZE];
-    uint16 offset = 0;
     uint8 filler;
     uint16 advInterval;
     uint8 advPayloadSize;
@@ -234,28 +228,6 @@ void startAdvertising(void)
     /* set the advertisement interval, API accepts the value in microseconds */
     GapSetAdvInterval(advInterval * MILLISECOND, advInterval * MILLISECOND);
     
-    /* manufacturer-specific data */
-    advData[0] = AD_TYPE_MANUF;
-
-    /* CSR company code, little endian */
-    advData[1] = 0x0A;
-    advData[2] = 0x00;
-    
-    /* fill in the rest of the advertisement */
-    for(offset = 0; offset < advPayloadSize; offset++)
-    {
-        advData[3 + offset] = filler;
-    }
-
-    /* store the advertisement data */
-    LsStoreAdvScanData(advPayloadSize + 3, advData, ad_src_advertise);
-    
-    /* Start broadcasting */
-    LsStartStopAdvertise(TRUE, whitelist_disabled, addressType);
-}
-void stopAdvertising(void)
-{
-    LsStartStopAdvertise(FALSE, whitelist_disabled, ls_addr_type_random);
 }
 
 /*============================================================================*
@@ -314,20 +286,20 @@ void AppInit(sleep_state last_sleep_state)
                     pio_mode_strong_pull_up);
 
     /* Configure button to be controlled directly */
-    PioSetMode(PIO_BUTTON, pio_mode_user);
+    PioSetMode(PIR_SIGNAL, pio_mode_user);
 
     /* Configure button to be input */
-    PioSetDir(PIO_BUTTON, PIO_DIR_INPUT);
+    PioSetDir(PIR_SIGNAL, PIO_DIR_INPUT);
 
     /* Set weak pull up on button PIO, in order not to draw too much current
      * while button is pressed
      */
-    PioSetPullModes((1UL << PIO_BUTTON), pio_mode_weak_pull_down);
+    PioSetPullModes((1UL << PIR_SIGNAL), pio_mode_weak_pull_down);
 
     /* Set the button to generate sys_event_pio_changed when pressed as well
      * as released
      */
-    PioSetEventMask((1UL << PIO_BUTTON), pio_event_mode_both);
+    PioSetEventMask((1UL << PIR_SIGNAL), pio_event_mode_rising);
 
 
     /* disable wake up on UART RX */
@@ -344,7 +316,9 @@ void AppInit(sleep_state last_sleep_state)
 
     TimerInit(MAX_APP_TIMERS, (void*)app_timers);
 
+    BeaconInit();
 
+    pirStatusServiceInit();
 }
 
 
@@ -371,12 +345,13 @@ void AppProcessSystemEvent(sys_event_id id, void *data)
         const pio_changed_data *pPioData = (const pio_changed_data *)data;
 
         /* If the PIO event comes from the button */
-        if (pPioData->pio_cause & (1UL << PIO_BUTTON))
+        if (pPioData->pio_cause & (1UL << PIR_SIGNAL))
         {
-			goToNextLedSeq(pPioData->pio_state & (1UL << PIO_BUTTON));
+			goToNextLedSeq(pPioData->pio_state & (1UL << PIR_SIGNAL));
+	        pirDetected();
         }
 #else // just changed PIO
-		goToNextLedSeq();
+        pirDetected();
 #endif
     }
 }

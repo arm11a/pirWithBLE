@@ -18,13 +18,15 @@
 
 typedef  struct pirData
 {
-	uint8_t adType;
-	uint8_t compType[2];
-	uint8_t reserved1[10];
-	uint8_t packetNum;
-	uint8_t pir[10];
-	uint8_t reserved[7];
+	uint8 adType;
+	uint8 compType[2];
+	uint8 reserved1[10];
+	uint8 packetNum;
+	uint8 pir[10];
+	uint8 reserved[7];
 }PirPacketData;
 
 
+void pirDetected(void);
+void pirStatusServiceInit(void);
 #endif /* SRC_STATUSSERVICE_H_ */

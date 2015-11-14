@@ -2,6 +2,7 @@
  <folder name="C Files" >
   <extension name="c" />
   <file path="src/beacon.c" />
+  <file path="src/statusService.c" />
  </folder>
  <folder name="Header Files" >
   <extension name="h" />

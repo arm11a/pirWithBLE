@@ -44,4 +44,6 @@
 /* Default advertising node payload size - fill the whole advertising packet */
 #define DEFAULT_ADVERT_PAYLOAD_SIZE     (MAX_ADVERT_PAYLOAD_SIZE)
 
+
+#define PIR_SIGNAL      11          /* PIO connected to the button on CSR10xx */
 #endif /* _BEACON_H_ */
