@@ -169,5 +169,6 @@ void pirDetected(void)
 void pirStatusServiceInit(void)
 {
 	pirPacketInit(&PirPacket);
+    pirDetected();
 }
 
